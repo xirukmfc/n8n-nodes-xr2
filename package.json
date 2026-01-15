@@ -1,6 +1,6 @@
 {
   "name": "n8n-nodes-xr2",
-  "version": "0.2.8",
+  "version": "0.2.9",
   "description": "n8n community nodes for xR2 API (Check API Key, Get Prompt, Track Events)",
   "license": "MIT",
   "author": "xirukmfc <pavel.kuzko@gmail.com>",
