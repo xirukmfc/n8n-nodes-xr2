@@ -1,0 +1,57 @@
+{
+  "name": "n8n-nodes-xr2",
+  "version": "0.2.8",
+  "description": "n8n community nodes for xR2 API (Check API Key, Get Prompt, Track Events)",
+  "license": "MIT",
+  "author": "xirukmfc <pavel.kuzko@gmail.com>",
+  "keywords": [
+    "n8n-community-node-package",
+    "n8n-community-node",
+    "n8n-nodes",
+    "xr2",
+    "prompts",
+    "analytics"
+  ],
+  "homepage": "https://github.com/xirukmfc/n8n-nodes-xr2#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/xirukmfc/n8n-nodes-xr2.git"
+  },
+  "bugs": {
+    "email": "hello@xr2.uk"
+  },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "n8n": {
+    "nodes": [
+      "dist/nodes/XR2/XR2.node.js"
+    ],
+    "credentials": [
+      "dist/credentials/XR2Api.credentials.js"
+    ]
+  },
+  "files": [
+    "dist",
+    "src/nodes/**/xr2.svg",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc -p . && npm run copy-assets",
+    "copy-assets": "mkdir -p dist/nodes/XR2 && cp src/nodes/XR2/*.svg src/nodes/XR2/*.png dist/nodes/XR2/ 2>/dev/null || true",
+    "clean": "rimraf dist",
+    "lint": "tsc -p . --noEmit",
+    "dev": "tsc -p . --watch",
+    "prepublishOnly": "npm run clean && npm run build"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "rimraf": "^5.0.5",
+    "typescript": "^5.4.0"
+  },
+  "peerDependencies": {
+    "n8n-workflow": ">=1.0.0"
+  },
+  "overrides": {
+    "form-data": "^4.0.4"
+  }
+}
