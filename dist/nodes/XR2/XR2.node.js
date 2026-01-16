@@ -256,7 +256,7 @@ class XR2 {
             // Check API Key
             if (resource === 'apiKey' && operation === 'check') {
                 const response = await http_1.xr2GetRequest.call(this, {
-                    uri: `${baseUrl}/api/v1/check-api-key`,
+                    url: `${baseUrl}/api/v1/check-api-key`,
                 });
                 returnData.push({ json: response });
             }
@@ -274,7 +274,7 @@ class XR2 {
                 if (status)
                     body.status = status;
                 const response = await http_1.xr2Request.call(this, {
-                    uri: `${baseUrl}/api/v1/get-prompt`,
+                    url: `${baseUrl}/api/v1/get-prompt`,
                     body,
                 });
                 returnData.push({ json: response });
@@ -313,7 +313,7 @@ class XR2 {
                     // Invalid JSON, skip metadata
                 }
                 const response = await http_1.xr2Request.call(this, {
-                    uri: `${baseUrl}/api/v1/events`,
+                    url: `${baseUrl}/api/v1/events`,
                     body,
                 });
                 returnData.push({ json: response });

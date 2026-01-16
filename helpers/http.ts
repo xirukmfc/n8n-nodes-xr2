@@ -3,7 +3,7 @@ import { NodeApiError, IDataObject, JsonObject } from 'n8n-workflow';
 export const BASE_URL = 'https://xr2.uk';
 
 export interface RequestOptions {
-    uri: string;
+    url: string;
     body?: IDataObject;
     method?: string;
     json?: boolean;
