@@ -32,12 +32,12 @@
   },
   "files": [
     "dist",
-    "src/nodes/**/xr2.svg",
+    "nodes/**/xr2.svg",
     "README.md"
   ],
   "scripts": {
     "build": "tsc -p . && npm run copy-assets",
-    "copy-assets": "mkdir -p dist/nodes/XR2 && cp src/nodes/XR2/*.svg src/nodes/XR2/*.png dist/nodes/XR2/ 2>/dev/null || true",
+    "copy-assets": "mkdir -p dist/nodes/XR2 && cp nodes/XR2/*.svg nodes/XR2/*.png dist/nodes/XR2/ 2>/dev/null || true",
     "clean": "rimraf dist",
     "lint": "tsc -p . --noEmit",
     "dev": "tsc -p . --watch",
