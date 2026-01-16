@@ -31,6 +31,13 @@ class XR2Api {
                 },
             },
         };
+        this.test = {
+            request: {
+                baseURL: '={{$credentials.baseUrl}}',
+                url: '/api/v1/check-api-key',
+                method: 'GET',
+            },
+        };
     }
 }
 exports.XR2Api = XR2Api;
