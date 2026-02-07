@@ -258,7 +258,7 @@ class XR2 {
                 const response = await http_1.xr2GetRequest.call(this, {
                     url: `${baseUrl}/api/v1/check-api-key`,
                 });
-                returnData.push({ json: response });
+                returnData.push({ json: response, pairedItem: { item: i } });
             }
             // Get Prompt
             if (resource === 'prompt' && operation === 'get') {
@@ -277,7 +277,7 @@ class XR2 {
                     url: `${baseUrl}/api/v1/get-prompt`,
                     body,
                 });
-                returnData.push({ json: response });
+                returnData.push({ json: response, pairedItem: { item: i } });
             }
             // Track Event
             if (resource === 'event' && operation === 'track') {
@@ -316,7 +316,7 @@ class XR2 {
                     url: `${baseUrl}/api/v1/events`,
                     body,
                 });
-                returnData.push({ json: response });
+                returnData.push({ json: response, pairedItem: { item: i } });
             }
         }
         return [returnData];
