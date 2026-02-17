@@ -149,6 +149,41 @@ class XR2 {
                     },
                 },
                 {
+                    displayName: 'Variable Values',
+                    name: 'variableValues',
+                    type: 'fixedCollection',
+                    typeOptions: { multipleValues: true },
+                    default: {},
+                    placeholder: 'Add Variable',
+                    description: 'Values to replace {{variable}} placeholders. Supports n8n expressions. Leave empty to get raw template.',
+                    displayOptions: {
+                        show: {
+                            resource: ['prompt'],
+                            operation: ['get'],
+                        },
+                    },
+                    options: [
+                        {
+                            displayName: 'Variable',
+                            name: 'variable',
+                            values: [
+                                {
+                                    displayName: 'Name',
+                                    name: 'name',
+                                    type: 'string',
+                                    default: '',
+                                },
+                                {
+                                    displayName: 'Value',
+                                    name: 'value',
+                                    type: 'string',
+                                    default: '',
+                                },
+                            ],
+                        },
+                    ],
+                },
+                {
                     displayName: 'Trace ID',
                     name: 'traceId',
                     type: 'string',
@@ -277,6 +312,39 @@ class XR2 {
                     url: `${baseUrl}/api/v1/get-prompt`,
                     body,
                 });
+                // Variable rendering
+                const variableValues = this.getNodeParameter('variableValues', i, {});
+                const variableEntries = variableValues.variable || [];
+                if (variableEntries.length > 0) {
+                    // Build values dict from user input
+                    const values = {};
+                    for (const entry of variableEntries) {
+                        const name = entry.name;
+                        const value = entry.value;
+                        if (name)
+                            values[name] = value;
+                    }
+                    // Apply defaults from response.variables for keys not provided
+                    const responseVars = response.variables || [];
+                    for (const v of responseVars) {
+                        if (v.name && !(v.name in values) && v.default !== undefined) {
+                            values[v.name] = v.default;
+                        }
+                    }
+                    // Replace {{name}} and {name} in prompt fields
+                    const promptFields = ['system_prompt', 'user_prompt', 'assistant_prompt'];
+                    for (const field of promptFields) {
+                        if (typeof response[field] === 'string') {
+                            let text = response[field];
+                            for (const [name, value] of Object.entries(values)) {
+                                text = text.replace(new RegExp(`\\{\\{${name}\\}\\}`, 'g'), value);
+                                text = text.replace(new RegExp(`\\{${name}\\}`, 'g'), value);
+                            }
+                            response[field] = text;
+                        }
+                    }
+                    response.variables_used = values;
+                }
                 returnData.push({ json: response, pairedItem: { item: i } });
             }
             // Track Event
