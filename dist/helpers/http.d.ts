@@ -1,10 +1,8 @@
-import { IDataObject } from 'n8n-workflow';
-export declare const BASE_URL = "https://xr2.uk";
+import { IDataObject, IExecuteFunctions, IHttpRequestMethods } from 'n8n-workflow';
 export interface RequestOptions {
     url: string;
     body?: IDataObject;
-    method?: string;
-    json?: boolean;
+    method?: IHttpRequestMethods;
 }
-export declare function xr2GetRequest(this: any, options: RequestOptions): Promise<any>;
-export declare function xr2Request(this: any, options: RequestOptions): Promise<any>;
+export declare function xr2GetRequest(this: IExecuteFunctions, options: RequestOptions): Promise<any>;
+export declare function xr2Request(this: IExecuteFunctions, options: RequestOptions): Promise<any>;

@@ -3,7 +3,7 @@ import { IAuthenticateGeneric, ICredentialTestRequest, ICredentialType, INodePro
 export class XR2Api implements ICredentialType {
     name = 'xr2Api';
     displayName = 'xR2 API';
-    documentationUrl = 'https://github.com/channeler-ai/xr2';
+    documentationUrl = 'https://github.com/xirukmfc/n8n-nodes-xr2';
     properties: INodeProperties[] = [
         {
             displayName: 'API Key',

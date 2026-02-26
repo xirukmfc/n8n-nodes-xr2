@@ -32,7 +32,7 @@
   },
   "files": [
     "dist",
-    "nodes/**/xr2.svg",
+    "nodes/**/xr2-logo.png",
     "README.md"
   ],
   "scripts": {

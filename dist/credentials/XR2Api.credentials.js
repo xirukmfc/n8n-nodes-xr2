@@ -5,7 +5,7 @@ class XR2Api {
     constructor() {
         this.name = 'xr2Api';
         this.displayName = 'xR2 API';
-        this.documentationUrl = 'https://github.com/channeler-ai/xr2';
+        this.documentationUrl = 'https://github.com/xirukmfc/n8n-nodes-xr2';
         this.properties = [
             {
                 displayName: 'API Key',

@@ -377,7 +377,7 @@ class XR2 {
                         body.metadata = metadata;
                     }
                 }
-                catch (e) {
+                catch {
                     // Invalid JSON, skip metadata
                 }
                 const response = await http_1.xr2Request.call(this, {

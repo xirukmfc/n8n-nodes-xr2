@@ -1,15 +1,18 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.BASE_URL = void 0;
 exports.xr2GetRequest = xr2GetRequest;
 exports.xr2Request = xr2Request;
 const n8n_workflow_1 = require("n8n-workflow");
-exports.BASE_URL = 'https://xr2.uk';
+/* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any */
 function handleXr2Error(error) {
-    var _a, _b, _c, _d, _e;
+    var _a, _b, _c;
+    // n8n error objects carry arbitrary fields (httpCode, statusCode, response, etc.)
+    const err = error;
+    const res = ((_a = err.response) !== null && _a !== void 0 ? _a : {});
+    const causeRes = ((_c = (_b = err.cause) === null || _b === void 0 ? void 0 : _b.response) !== null && _c !== void 0 ? _c : {});
     // Extract status code from various possible locations
-    const rawStatusCode = error.httpCode || error.statusCode || error.status ||
-        ((_a = error.response) === null || _a === void 0 ? void 0 : _a.statusCode) || ((_b = error.response) === null || _b === void 0 ? void 0 : _b.status);
+    const rawStatusCode = err.httpCode || err.statusCode || err.status ||
+        res.statusCode || res.status;
     const statusCode = rawStatusCode !== undefined && rawStatusCode !== null
         ? Number(rawStatusCode)
         : undefined;
@@ -18,11 +21,11 @@ function handleXr2Error(error) {
     let apiResponse = null;
     // n8n puts the response in error.errorResponse
     const possibleBodies = [
-        error.errorResponse,
-        (_c = error.response) === null || _c === void 0 ? void 0 : _c.body,
-        (_e = (_d = error.cause) === null || _d === void 0 ? void 0 : _d.response) === null || _e === void 0 ? void 0 : _e.body,
-        error.body,
-        error.data,
+        err.errorResponse,
+        res.body,
+        causeRes.body,
+        err.body,
+        err.data,
     ];
     for (const body of possibleBodies) {
         if (body) {
@@ -41,9 +44,9 @@ function handleXr2Error(error) {
     if (apiResponse === null || apiResponse === void 0 ? void 0 : apiResponse.detail) {
         const detail = apiResponse.detail;
         if (typeof detail === 'object') {
-            apiErrorMessage = detail.message || detail.error || '';
-            apiSuggestion = detail.suggestion || '';
-            if (detail.available_statuses) {
+            apiErrorMessage = (detail.message || detail.error || '');
+            apiSuggestion = (detail.suggestion || '');
+            if (Array.isArray(detail.available_statuses)) {
                 apiSuggestion += `\nAvailable statuses: ${detail.available_statuses.join(', ')}`;
             }
             if (detail.slug) {
@@ -104,12 +107,10 @@ function handleXr2Error(error) {
 async function xr2GetRequest(options) {
     const requestOptions = {
         method: 'GET',
-        json: true,
         ...options,
     };
     try {
-        const response = await this.helpers.httpRequestWithAuthentication.call(this, 'xr2Api', requestOptions);
-        return response;
+        return await this.helpers.httpRequestWithAuthentication.call(this, 'xr2Api', requestOptions);
     }
     catch (error) {
         throw handleXr2Error.call(this, error);
@@ -118,12 +119,10 @@ async function xr2GetRequest(options) {
 async function xr2Request(options) {
     const requestOptions = {
         method: 'POST',
-        json: true,
         ...options,
     };
     try {
-        const response = await this.helpers.httpRequestWithAuthentication.call(this, 'xr2Api', requestOptions);
-        return response;
+        return await this.helpers.httpRequestWithAuthentication.call(this, 'xr2Api', requestOptions);
     }
     catch (error) {
         throw handleXr2Error.call(this, error);

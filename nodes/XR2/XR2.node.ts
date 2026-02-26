@@ -385,7 +385,7 @@ export class XR2 implements INodeType {
                     if (Object.keys(metadata).length > 0) {
                         body.metadata = metadata;
                     }
-                } catch (e) {
+                } catch {
                     // Invalid JSON, skip metadata
                 }
 
