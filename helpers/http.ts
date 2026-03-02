@@ -6,7 +6,7 @@ export interface RequestOptions {
     method?: IHttpRequestMethods;
 }
 
-/* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 function handleXr2Error(this: IExecuteFunctions, error: Error & Record<string, unknown>): never {
     // n8n error objects carry arbitrary fields (httpCode, statusCode, response, etc.)
     const err = error as Record<string, any>;

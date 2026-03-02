@@ -5,6 +5,7 @@ class XR2Api {
     constructor() {
         this.name = 'xr2Api';
         this.displayName = 'xR2 API';
+        this.icon = { light: 'file:../nodes/XR2/xr2-logo.svg', dark: 'file:../nodes/XR2/xr2-logo.svg' };
         this.documentationUrl = 'https://github.com/xirukmfc/n8n-nodes-xr2';
         this.properties = [
             {
@@ -41,3 +42,4 @@ class XR2Api {
     }
 }
 exports.XR2Api = XR2Api;
+//# sourceMappingURL=XR2Api.credentials.js.map

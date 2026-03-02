@@ -7,7 +7,7 @@ class XR2 {
         this.description = {
             displayName: 'xR2',
             name: 'xr2',
-            icon: 'file:xr2-logo.png',
+            icon: 'file:xr2-logo.svg',
             group: ['transform'],
             version: 1,
             description: 'Interact with xR2 APIs',
@@ -27,6 +27,7 @@ class XR2 {
                     displayName: 'Resource',
                     name: 'resource',
                     type: 'options',
+                    noDataExpression: true,
                     options: [
                         {
                             name: 'API Key',
@@ -47,6 +48,7 @@ class XR2 {
                     displayName: 'Operation',
                     name: 'operation',
                     type: 'options',
+                    noDataExpression: true,
                     displayOptions: {
                         show: {
                             resource: ['apiKey'],
@@ -66,6 +68,7 @@ class XR2 {
                     displayName: 'Operation',
                     name: 'operation',
                     type: 'options',
+                    noDataExpression: true,
                     displayOptions: {
                         show: {
                             resource: ['prompt'],
@@ -85,6 +88,7 @@ class XR2 {
                     displayName: 'Operation',
                     name: 'operation',
                     type: 'options',
+                    noDataExpression: true,
                     displayOptions: {
                         show: {
                             resource: ['event'],
@@ -133,11 +137,11 @@ class XR2 {
                     type: 'options',
                     options: [
                         { name: 'Any (Default)', value: '' },
-                        { name: 'Production', value: 'production' },
-                        { name: 'Testing', value: 'testing' },
+                        { name: 'Deprecated', value: 'deprecated' },
                         { name: 'Draft', value: 'draft' },
                         { name: 'Inactive', value: 'inactive' },
-                        { name: 'Deprecated', value: 'deprecated' },
+                        { name: 'Production', value: 'production' },
+                        { name: 'Testing', value: 'testing' },
                     ],
                     default: '',
                     description: 'Filter by version status. Leave as "Any" to get the latest deployed version regardless of status. Only use specific statuses if you need a particular version.',
@@ -242,7 +246,7 @@ class XR2 {
                     name: 'value',
                     type: 'number',
                     default: 0,
-                    description: 'Numeric value for revenue tracking, order amounts, etc. (0 = not set)',
+                    description: 'Numeric value for revenue tracking, order amounts, etc. (0 = not set).',
                     displayOptions: {
                         show: {
                             resource: ['event'],
@@ -277,25 +281,23 @@ class XR2 {
                     },
                 },
             ],
+            usableAsTool: true,
         };
     }
     async execute() {
         const items = this.getInputData();
         const returnData = [];
-        // Get base URL from credentials
         const credentials = await this.getCredentials('xr2Api');
         const baseUrl = (credentials.baseUrl || 'https://xr2.uk').replace(/\/$/, '');
         for (let i = 0; i < items.length; i++) {
             const resource = this.getNodeParameter('resource', i);
             const operation = this.getNodeParameter('operation', i);
-            // Check API Key
             if (resource === 'apiKey' && operation === 'check') {
                 const response = await http_1.xr2GetRequest.call(this, {
                     url: `${baseUrl}/api/v1/check-api-key`,
                 });
                 returnData.push({ json: response, pairedItem: { item: i } });
             }
-            // Get Prompt
             if (resource === 'prompt' && operation === 'get') {
                 const slug = this.getNodeParameter('slug', i);
                 const versionNumber = this.getNodeParameter('versionNumber', i, 0);
@@ -312,11 +314,9 @@ class XR2 {
                     url: `${baseUrl}/api/v1/get-prompt`,
                     body,
                 });
-                // Variable rendering
                 const variableValues = this.getNodeParameter('variableValues', i, {});
                 const variableEntries = variableValues.variable || [];
                 if (variableEntries.length > 0) {
-                    // Build values dict from user input
                     const values = {};
                     for (const entry of variableEntries) {
                         const name = entry.name;
@@ -324,14 +324,12 @@ class XR2 {
                         if (name)
                             values[name] = value;
                     }
-                    // Apply defaults from response.variables for keys not provided
                     const responseVars = response.variables || [];
                     for (const v of responseVars) {
                         if (v.name && !(v.name in values) && v.default !== undefined) {
                             values[v.name] = v.default;
                         }
                     }
-                    // Replace {{name}} and {name} in prompt fields
                     const promptFields = ['system_prompt', 'user_prompt', 'assistant_prompt'];
                     for (const field of promptFields) {
                         if (typeof response[field] === 'string') {
@@ -347,7 +345,6 @@ class XR2 {
                 }
                 returnData.push({ json: response, pairedItem: { item: i } });
             }
-            // Track Event
             if (resource === 'event' && operation === 'track') {
                 const traceId = this.getNodeParameter('traceId', i);
                 const eventName = this.getNodeParameter('eventName', i);
@@ -361,7 +358,6 @@ class XR2 {
                     event_name: eventName,
                     source_name: 'n8n_sdk',
                 };
-                // Add optional fields only if they have values
                 if (userId)
                     body.user_id = userId;
                 if (sessionId)
@@ -370,7 +366,6 @@ class XR2 {
                     body.value = value;
                 if (currency)
                     body.currency = currency;
-                // Parse metadata
                 try {
                     const metadata = JSON.parse(metadataStr);
                     if (Object.keys(metadata).length > 0) {
@@ -378,7 +373,6 @@ class XR2 {
                     }
                 }
                 catch {
-                    // Invalid JSON, skip metadata
                 }
                 const response = await http_1.xr2Request.call(this, {
                     url: `${baseUrl}/api/v1/events`,
@@ -391,3 +385,4 @@ class XR2 {
     }
 }
 exports.XR2 = XR2;
+//# sourceMappingURL=Xr2.node.js.map

@@ -3,23 +3,18 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.xr2GetRequest = xr2GetRequest;
 exports.xr2Request = xr2Request;
 const n8n_workflow_1 = require("n8n-workflow");
-/* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any */
 function handleXr2Error(error) {
     var _a, _b, _c;
-    // n8n error objects carry arbitrary fields (httpCode, statusCode, response, etc.)
     const err = error;
     const res = ((_a = err.response) !== null && _a !== void 0 ? _a : {});
     const causeRes = ((_c = (_b = err.cause) === null || _b === void 0 ? void 0 : _b.response) !== null && _c !== void 0 ? _c : {});
-    // Extract status code from various possible locations
     const rawStatusCode = err.httpCode || err.statusCode || err.status ||
         res.statusCode || res.status;
     const statusCode = rawStatusCode !== undefined && rawStatusCode !== null
         ? Number(rawStatusCode)
         : undefined;
     const statusForMessage = Number.isFinite(statusCode) ? statusCode : rawStatusCode;
-    // Extract error details from response body - check multiple locations
     let apiResponse = null;
-    // n8n puts the response in error.errorResponse
     const possibleBodies = [
         err.errorResponse,
         res.body,
@@ -34,11 +29,9 @@ function handleXr2Error(error) {
                 break;
             }
             catch {
-                // continue to next
             }
         }
     }
-    // Extract detailed error message from API response
     let apiErrorMessage = '';
     let apiSuggestion = '';
     if (apiResponse === null || apiResponse === void 0 ? void 0 : apiResponse.detail) {
@@ -57,7 +50,6 @@ function handleXr2Error(error) {
             apiErrorMessage = String(detail);
         }
     }
-    // Build error message
     let errorMessage = '';
     let suggestions = '';
     if (statusCode === 401 || statusCode === 403) {
@@ -86,7 +78,6 @@ function handleXr2Error(error) {
         errorMessage = '⚠️ ' + (apiErrorMessage || error.message || 'Request Failed');
         suggestions = apiSuggestion || '';
     }
-    // Combine message with details
     let fullMessage = errorMessage;
     if (suggestions) {
         fullMessage += `\n\n💡 ${suggestions}`;
@@ -94,7 +85,6 @@ function handleXr2Error(error) {
     if (statusForMessage !== undefined) {
         fullMessage += `\n\n🔍 HTTP Status: ${statusForMessage}`;
     }
-    // Create enhanced error object
     const enhancedError = {
         ...error,
         message: fullMessage,
@@ -128,3 +118,4 @@ async function xr2Request(options) {
         throw handleXr2Error.call(this, error);
     }
 }
+//# sourceMappingURL=http.js.map
