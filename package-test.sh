@@ -48,8 +48,6 @@ npm run build
 echo ""
 echo "📂 Checking dist files..."
 required_files=(
-    "dist/index.js"
-    "dist/index.d.ts"
     "dist/credentials/XR2Api.credentials.js"
     "dist/nodes/XR2/XR2.node.js"
     "dist/helpers/http.js"

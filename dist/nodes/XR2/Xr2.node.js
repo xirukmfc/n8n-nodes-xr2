@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.XR2 = void 0;
+const n8n_workflow_1 = require("n8n-workflow");
 const http_1 = require("../../helpers/http");
 class XR2 {
     constructor() {
@@ -14,8 +15,9 @@ class XR2 {
             defaults: {
                 name: 'xR2',
             },
-            inputs: ['main'],
-            outputs: ['main'],
+            subtitle: '={{$parameter["operation"] + ": " + $parameter["resource"]}}',
+            inputs: [n8n_workflow_1.NodeConnectionTypes.Main],
+            outputs: [n8n_workflow_1.NodeConnectionTypes.Main],
             credentials: [
                 {
                     name: 'xr2Api',
@@ -34,12 +36,12 @@ class XR2 {
                             value: 'apiKey',
                         },
                         {
-                            name: 'Prompt',
-                            value: 'prompt',
-                        },
-                        {
                             name: 'Event',
                             value: 'event',
+                        },
+                        {
+                            name: 'Prompt',
+                            value: 'prompt',
                         },
                     ],
                     default: 'prompt',
@@ -290,95 +292,104 @@ class XR2 {
         const credentials = await this.getCredentials('xr2Api');
         const baseUrl = (credentials.baseUrl || 'https://xr2.uk').replace(/\/$/, '');
         for (let i = 0; i < items.length; i++) {
-            const resource = this.getNodeParameter('resource', i);
-            const operation = this.getNodeParameter('operation', i);
-            if (resource === 'apiKey' && operation === 'check') {
-                const response = await http_1.xr2GetRequest.call(this, {
-                    url: `${baseUrl}/api/v1/check-api-key`,
-                });
-                returnData.push({ json: response, pairedItem: { item: i } });
-            }
-            if (resource === 'prompt' && operation === 'get') {
-                const slug = this.getNodeParameter('slug', i);
-                const versionNumber = this.getNodeParameter('versionNumber', i, 0);
-                const status = this.getNodeParameter('status', i, '');
-                const body = {
-                    slug,
-                    source_name: 'n8n_sdk',
-                };
-                if (versionNumber && Number(versionNumber) > 0)
-                    body.version_number = Number(versionNumber);
-                if (status)
-                    body.status = status;
-                const response = await http_1.xr2Request.call(this, {
-                    url: `${baseUrl}/api/v1/get-prompt`,
-                    body,
-                });
-                const variableValues = this.getNodeParameter('variableValues', i, {});
-                const variableEntries = variableValues.variable || [];
-                if (variableEntries.length > 0) {
-                    const values = {};
-                    for (const entry of variableEntries) {
-                        const name = entry.name;
-                        const value = entry.value;
-                        if (name)
-                            values[name] = value;
-                    }
-                    const responseVars = response.variables || [];
-                    for (const v of responseVars) {
-                        if (v.name && !(v.name in values) && v.default !== undefined) {
-                            values[v.name] = v.default;
+            try {
+                const resource = this.getNodeParameter('resource', i);
+                const operation = this.getNodeParameter('operation', i);
+                if (resource === 'apiKey' && operation === 'check') {
+                    const response = await http_1.xr2GetRequest.call(this, {
+                        url: `${baseUrl}/api/v1/check-api-key`,
+                    });
+                    returnData.push({ json: response, pairedItem: { item: i } });
+                }
+                if (resource === 'prompt' && operation === 'get') {
+                    const slug = this.getNodeParameter('slug', i);
+                    const versionNumber = this.getNodeParameter('versionNumber', i, 0);
+                    const status = this.getNodeParameter('status', i, '');
+                    const body = {
+                        slug,
+                        source_name: 'n8n_sdk',
+                    };
+                    if (versionNumber && Number(versionNumber) > 0)
+                        body.version_number = Number(versionNumber);
+                    if (status)
+                        body.status = status;
+                    const response = await http_1.xr2Request.call(this, {
+                        url: `${baseUrl}/api/v1/get-prompt`,
+                        body,
+                    });
+                    const variableValues = this.getNodeParameter('variableValues', i, {});
+                    const variableEntries = variableValues.variable || [];
+                    if (variableEntries.length > 0) {
+                        const values = {};
+                        for (const entry of variableEntries) {
+                            const name = entry.name;
+                            const value = entry.value;
+                            if (name)
+                                values[name] = value;
                         }
-                    }
-                    const promptFields = ['system_prompt', 'user_prompt', 'assistant_prompt'];
-                    for (const field of promptFields) {
-                        if (typeof response[field] === 'string') {
-                            let text = response[field];
-                            for (const [name, value] of Object.entries(values)) {
-                                text = text.replace(new RegExp(`\\{\\{${name}\\}\\}`, 'g'), value);
-                                text = text.replace(new RegExp(`\\{${name}\\}`, 'g'), value);
+                        const responseVars = response.variables || [];
+                        for (const v of responseVars) {
+                            if (v.name && !(v.name in values) && v.default !== undefined) {
+                                values[v.name] = v.default;
                             }
-                            response[field] = text;
+                        }
+                        const promptFields = ['system_prompt', 'user_prompt', 'assistant_prompt'];
+                        for (const field of promptFields) {
+                            if (typeof response[field] === 'string') {
+                                let text = response[field];
+                                for (const [name, value] of Object.entries(values)) {
+                                    text = text.replace(new RegExp(`\\{\\{${name}\\}\\}`, 'g'), value);
+                                    text = text.replace(new RegExp(`\\{${name}\\}`, 'g'), value);
+                                }
+                                response[field] = text;
+                            }
+                        }
+                        response.variables_used = values;
+                    }
+                    returnData.push({ json: response, pairedItem: { item: i } });
+                }
+                if (resource === 'event' && operation === 'track') {
+                    const traceId = this.getNodeParameter('traceId', i);
+                    const eventName = this.getNodeParameter('eventName', i);
+                    const userId = this.getNodeParameter('userId', i, '');
+                    const sessionId = this.getNodeParameter('sessionId', i, '');
+                    const value = this.getNodeParameter('value', i, 0);
+                    const currency = this.getNodeParameter('currency', i, '');
+                    const metadataStr = this.getNodeParameter('metadata', i, '{}');
+                    const body = {
+                        trace_id: traceId,
+                        event_name: eventName,
+                        source_name: 'n8n_sdk',
+                    };
+                    if (userId)
+                        body.user_id = userId;
+                    if (sessionId)
+                        body.session_id = sessionId;
+                    if (value && value > 0)
+                        body.value = value;
+                    if (currency)
+                        body.currency = currency;
+                    try {
+                        const metadata = JSON.parse(metadataStr);
+                        if (Object.keys(metadata).length > 0) {
+                            body.metadata = metadata;
                         }
                     }
-                    response.variables_used = values;
-                }
-                returnData.push({ json: response, pairedItem: { item: i } });
-            }
-            if (resource === 'event' && operation === 'track') {
-                const traceId = this.getNodeParameter('traceId', i);
-                const eventName = this.getNodeParameter('eventName', i);
-                const userId = this.getNodeParameter('userId', i, '');
-                const sessionId = this.getNodeParameter('sessionId', i, '');
-                const value = this.getNodeParameter('value', i, 0);
-                const currency = this.getNodeParameter('currency', i, '');
-                const metadataStr = this.getNodeParameter('metadata', i, '{}');
-                const body = {
-                    trace_id: traceId,
-                    event_name: eventName,
-                    source_name: 'n8n_sdk',
-                };
-                if (userId)
-                    body.user_id = userId;
-                if (sessionId)
-                    body.session_id = sessionId;
-                if (value && value > 0)
-                    body.value = value;
-                if (currency)
-                    body.currency = currency;
-                try {
-                    const metadata = JSON.parse(metadataStr);
-                    if (Object.keys(metadata).length > 0) {
-                        body.metadata = metadata;
+                    catch {
                     }
+                    const response = await http_1.xr2Request.call(this, {
+                        url: `${baseUrl}/api/v1/events`,
+                        body,
+                    });
+                    returnData.push({ json: response, pairedItem: { item: i } });
                 }
-                catch {
+            }
+            catch (error) {
+                if (this.continueOnFail()) {
+                    returnData.push({ json: { error: error.message }, pairedItem: { item: i } });
+                    continue;
                 }
-                const response = await http_1.xr2Request.call(this, {
-                    url: `${baseUrl}/api/v1/events`,
-                    body,
-                });
-                returnData.push({ json: response, pairedItem: { item: i } });
+                throw error;
             }
         }
         return [returnData];
