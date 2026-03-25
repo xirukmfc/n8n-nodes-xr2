@@ -1,4 +1,11 @@
-import type { IExecuteFunctions, IDataObject, INodeExecutionData, INodeType, INodeTypeDescription } from 'n8n-workflow';
+import {
+	type IExecuteFunctions,
+	type IDataObject,
+	type INodeExecutionData,
+	type INodeType,
+	type INodeTypeDescription,
+	NodeConnectionTypes,
+} from 'n8n-workflow';
 import { xr2Request, xr2GetRequest } from '../../helpers/http';
 
 export class XR2 implements INodeType {
@@ -12,8 +19,9 @@ export class XR2 implements INodeType {
         defaults: {
             name: 'xR2',
         },
-        inputs: ['main'],
-        outputs: ['main'],
+        subtitle: '={{$parameter["operation"] + ": " + $parameter["resource"]}}',
+        inputs: [NodeConnectionTypes.Main],
+        outputs: [NodeConnectionTypes.Main],
         credentials: [
             {
                 name: 'xr2Api',
@@ -32,12 +40,12 @@ export class XR2 implements INodeType {
                         value: 'apiKey',
                     },
                     {
-                        name: 'Prompt',
-                        value: 'prompt',
-                    },
-                    {
                         name: 'Event',
                         value: 'event',
+                    },
+                    {
+                        name: 'Prompt',
+                        value: 'prompt',
                     },
                 ],
                 default: 'prompt',
@@ -292,114 +300,122 @@ export class XR2 implements INodeType {
         const baseUrl = ((credentials.baseUrl as string) || 'https://xr2.uk').replace(/\/$/, '');
 
         for (let i = 0; i < items.length; i++) {
-            const resource = this.getNodeParameter('resource', i) as string;
-            const operation = this.getNodeParameter('operation', i) as string;
+            try {
+                const resource = this.getNodeParameter('resource', i) as string;
+                const operation = this.getNodeParameter('operation', i) as string;
 
-            // Check API Key
-            if (resource === 'apiKey' && operation === 'check') {
-                const response = await xr2GetRequest.call(this, {
-                    url: `${baseUrl}/api/v1/check-api-key`,
-                });
+                // Check API Key
+                if (resource === 'apiKey' && operation === 'check') {
+                    const response = await xr2GetRequest.call(this, {
+                        url: `${baseUrl}/api/v1/check-api-key`,
+                    });
 
-                returnData.push({ json: response as IDataObject, pairedItem: { item: i } });
-            }
+                    returnData.push({ json: response as IDataObject, pairedItem: { item: i } });
+                }
 
-            // Get Prompt
-            if (resource === 'prompt' && operation === 'get') {
-                const slug = this.getNodeParameter('slug', i) as string;
-                const versionNumber = this.getNodeParameter('versionNumber', i, 0) as number;
-                const status = this.getNodeParameter('status', i, '') as string;
+                // Get Prompt
+                if (resource === 'prompt' && operation === 'get') {
+                    const slug = this.getNodeParameter('slug', i) as string;
+                    const versionNumber = this.getNodeParameter('versionNumber', i, 0) as number;
+                    const status = this.getNodeParameter('status', i, '') as string;
 
-                const body: IDataObject = {
-                    slug,
-                    source_name: 'n8n_sdk',
-                };
-                if (versionNumber && Number(versionNumber) > 0) body.version_number = Number(versionNumber);
-                if (status) body.status = status;
+                    const body: IDataObject = {
+                        slug,
+                        source_name: 'n8n_sdk',
+                    };
+                    if (versionNumber && Number(versionNumber) > 0) body.version_number = Number(versionNumber);
+                    if (status) body.status = status;
 
-                const response = await xr2Request.call(this, {
-                    url: `${baseUrl}/api/v1/get-prompt`,
-                    body,
-                }) as IDataObject;
+                    const response = await xr2Request.call(this, {
+                        url: `${baseUrl}/api/v1/get-prompt`,
+                        body,
+                    }) as IDataObject;
 
-                // Variable rendering
-                const variableValues = this.getNodeParameter('variableValues', i, {}) as IDataObject;
-                const variableEntries = (variableValues.variable as IDataObject[] | undefined) || [];
+                    // Variable rendering
+                    const variableValues = this.getNodeParameter('variableValues', i, {}) as IDataObject;
+                    const variableEntries = (variableValues.variable as IDataObject[] | undefined) || [];
 
-                if (variableEntries.length > 0) {
-                    // Build values dict from user input
-                    const values: Record<string, string> = {};
-                    for (const entry of variableEntries) {
-                        const name = entry.name as string;
-                        const value = entry.value as string;
-                        if (name) values[name] = value;
-                    }
-
-                    // Apply defaults from response.variables for keys not provided
-                    const responseVars = (response.variables as Array<{ name: string; default?: string }>) || [];
-                    for (const v of responseVars) {
-                        if (v.name && !(v.name in values) && v.default !== undefined) {
-                            values[v.name] = v.default;
+                    if (variableEntries.length > 0) {
+                        // Build values dict from user input
+                        const values: Record<string, string> = {};
+                        for (const entry of variableEntries) {
+                            const name = entry.name as string;
+                            const value = entry.value as string;
+                            if (name) values[name] = value;
                         }
-                    }
 
-                    // Replace {{name}} and {name} in prompt fields
-                    const promptFields = ['system_prompt', 'user_prompt', 'assistant_prompt'];
-                    for (const field of promptFields) {
-                        if (typeof response[field] === 'string') {
-                            let text = response[field] as string;
-                            for (const [name, value] of Object.entries(values)) {
-                                text = text.replace(new RegExp(`\\{\\{${name}\\}\\}`, 'g'), value);
-                                text = text.replace(new RegExp(`\\{${name}\\}`, 'g'), value);
+                        // Apply defaults from response.variables for keys not provided
+                        const responseVars = (response.variables as Array<{ name: string; default?: string }>) || [];
+                        for (const v of responseVars) {
+                            if (v.name && !(v.name in values) && v.default !== undefined) {
+                                values[v.name] = v.default;
                             }
-                            response[field] = text;
                         }
+
+                        // Replace {{name}} and {name} in prompt fields
+                        const promptFields = ['system_prompt', 'user_prompt', 'assistant_prompt'];
+                        for (const field of promptFields) {
+                            if (typeof response[field] === 'string') {
+                                let text = response[field] as string;
+                                for (const [name, value] of Object.entries(values)) {
+                                    text = text.replace(new RegExp(`\\{\\{${name}\\}\\}`, 'g'), value);
+                                    text = text.replace(new RegExp(`\\{${name}\\}`, 'g'), value);
+                                }
+                                response[field] = text;
+                            }
+                        }
+
+                        response.variables_used = values;
                     }
 
-                    response.variables_used = values;
+                    returnData.push({ json: response, pairedItem: { item: i } });
                 }
 
-                returnData.push({ json: response, pairedItem: { item: i } });
-            }
+                // Track Event
+                if (resource === 'event' && operation === 'track') {
+                    const traceId = this.getNodeParameter('traceId', i) as string;
+                    const eventName = this.getNodeParameter('eventName', i) as string;
+                    const userId = this.getNodeParameter('userId', i, '') as string;
+                    const sessionId = this.getNodeParameter('sessionId', i, '') as string;
+                    const value = this.getNodeParameter('value', i, 0) as number;
+                    const currency = this.getNodeParameter('currency', i, '') as string;
+                    const metadataStr = this.getNodeParameter('metadata', i, '{}') as string;
 
-            // Track Event
-            if (resource === 'event' && operation === 'track') {
-                const traceId = this.getNodeParameter('traceId', i) as string;
-                const eventName = this.getNodeParameter('eventName', i) as string;
-                const userId = this.getNodeParameter('userId', i, '') as string;
-                const sessionId = this.getNodeParameter('sessionId', i, '') as string;
-                const value = this.getNodeParameter('value', i, 0) as number;
-                const currency = this.getNodeParameter('currency', i, '') as string;
-                const metadataStr = this.getNodeParameter('metadata', i, '{}') as string;
+                    const body: IDataObject = {
+                        trace_id: traceId,
+                        event_name: eventName,
+                        source_name: 'n8n_sdk',
+                    };
 
-                const body: IDataObject = {
-                    trace_id: traceId,
-                    event_name: eventName,
-                    source_name: 'n8n_sdk',
-                };
+                    // Add optional fields only if they have values
+                    if (userId) body.user_id = userId;
+                    if (sessionId) body.session_id = sessionId;
+                    if (value && value > 0) body.value = value;
+                    if (currency) body.currency = currency;
 
-                // Add optional fields only if they have values
-                if (userId) body.user_id = userId;
-                if (sessionId) body.session_id = sessionId;
-                if (value && value > 0) body.value = value;
-                if (currency) body.currency = currency;
-
-                // Parse metadata
-                try {
-                    const metadata = JSON.parse(metadataStr);
-                    if (Object.keys(metadata).length > 0) {
-                        body.metadata = metadata;
+                    // Parse metadata
+                    try {
+                        const metadata = JSON.parse(metadataStr);
+                        if (Object.keys(metadata).length > 0) {
+                            body.metadata = metadata;
+                        }
+                    } catch {
+                        // Invalid JSON, skip metadata
                     }
-                } catch {
-                    // Invalid JSON, skip metadata
+
+                    const response = await xr2Request.call(this, {
+                        url: `${baseUrl}/api/v1/events`,
+                        body,
+                    });
+
+                    returnData.push({ json: response as IDataObject, pairedItem: { item: i } });
                 }
-
-                const response = await xr2Request.call(this, {
-                    url: `${baseUrl}/api/v1/events`,
-                    body,
-                });
-
-                returnData.push({ json: response as IDataObject, pairedItem: { item: i } });
+            } catch (error) {
+                if (this.continueOnFail()) {
+                    returnData.push({ json: { error: (error as Error).message }, pairedItem: { item: i } });
+                    continue;
+                }
+                throw error;
             }
         }
 
