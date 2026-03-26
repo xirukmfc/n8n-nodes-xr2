@@ -394,13 +394,11 @@ export class XR2 implements INodeType {
                     if (currency) body.currency = currency;
 
                     // Parse metadata
-                    try {
+                    if (metadataStr && metadataStr !== '{}') {
                         const metadata = JSON.parse(metadataStr);
-                        if (Object.keys(metadata).length > 0) {
+                        if (typeof metadata === 'object' && metadata !== null && Object.keys(metadata).length > 0) {
                             body.metadata = metadata;
                         }
-                    } catch {
-                        // Invalid JSON, skip metadata
                     }
 
                     const response = await xr2Request.call(this, {
